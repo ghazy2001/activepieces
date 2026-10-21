@@ -10,6 +10,7 @@ import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, B
 import { platformPlanTelemetry } from '../platform-plan-telemetry'
 import { assertSeatsNotBelowActiveUsers, platformPlanService } from '../platform-plan.service'
 import { selfServeTrialWindow } from '../self-serve-trial-window'
+import { trialSeatGrace } from '../trial-seat-grace'
 import { autumnConsole, autumnUtils, BalanceCacheSnapshot, ConsoleCustomerCall, CreditsBalanceCache } from './autumn-utils'
 
 const CREDITS_REFETCH_PERIOD_MS = 180 * 1000
@@ -224,7 +225,11 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         return status
     },
     getSelfServeTrialWindow: async (platformId: string) => {
-        return (await selfServeTrialWindow.read(platformId))?.window ?? null
+        const window = (await selfServeTrialWindow.read(platformId))?.window ?? null
+        if (isNil(window)) {
+            return null
+        }
+        return { ...window, seatGraceEndsAt: await trialSeatGrace(log).endsAt({ platformId, window }) }
     },
 })
 

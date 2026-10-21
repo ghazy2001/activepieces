@@ -226,12 +226,17 @@ export const SelfServeTrialWindow = z.object({
 })
 export type SelfServeTrialWindow = z.infer<typeof SelfServeTrialWindow>
 
+export const PlatformSelfServeTrial = SelfServeTrialWindow.extend({
+    seatGraceEndsAt: Nullable(z.string()),
+})
+export type PlatformSelfServeTrial = z.infer<typeof PlatformSelfServeTrial>
+
 export const PlatformWithoutSensitiveData = z.object({
     federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
     plan: PlatformPlanLimits,
     usage: PlatformUsage.optional(),
     billingEnforced: z.boolean().optional(),
-    selfServeTrial: SelfServeTrialWindow.optional(),
+    selfServeTrial: PlatformSelfServeTrial.optional(),
     id: z.string(),
     created: DateOrString,
     updated: DateOrString,
