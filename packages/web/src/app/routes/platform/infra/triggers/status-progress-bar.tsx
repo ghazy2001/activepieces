@@ -28,9 +28,9 @@ export function StatusProgressBar({ days, className }: StatusProgressBarProps) {
               <div
                 className={cn(
                   'h-6 w-3 rounded-sm transition-opacity hover:opacity-80',
-                  day.status === 'success' && 'bg-success-10',
-                  day.status === 'fault' && 'bg-danger-10',
-                  day.status === 'warning' && 'bg-warning-10',
+                  day.status === 'success' && 'bg-success-9',
+                  day.status === 'fault' && 'bg-danger-9',
+                  day.status === 'warning' && 'bg-warning-9',
                 )}
               />
             </TooltipTrigger>

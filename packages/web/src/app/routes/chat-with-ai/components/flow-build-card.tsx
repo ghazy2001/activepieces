@@ -19,7 +19,8 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
 
-const CARD_BASE = 'bg-panel';
+const CARD_BASE =
+  'bg-[color-mix(in_oklab,var(--swatch-6-mark)_5%,color-mix(in_oklab,var(--panel)_75%,var(--gray-5)))]';
 
 export function FlowBuildCard({
   buildId,
@@ -165,7 +166,7 @@ function BuildStepIcon({ status }: { status: BuildPlanStep['status'] }) {
       );
     case 'failed':
       return (
-        <AlertCircle className="h-[18px] w-[18px] shrink-0 text-warning-11" />
+        <AlertCircle className="h-[18px] w-[18px] shrink-0 text-warning-10" />
       );
     case 'pending':
     default:

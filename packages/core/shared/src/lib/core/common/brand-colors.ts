@@ -3,6 +3,7 @@ const MAX_CHROMA_RATIO = 1.25
 const DEFAULT_ACCENT_SOLID = '#6e41e2'
 const WHITE = '#ffffff'
 const BLACK = '#000000'
+const WHITE_LABEL_LC = 60
 const TEXT_CONTRAST = 4.5
 const MARK_CONTRAST = 3
 const LIGHTNESS_STEP = 0.5
@@ -257,16 +258,20 @@ const COLOR_FAMILIES: Record<ColorFamily, FamilyShade[]> = {
 }
 
 const SWATCH_FAMILIES: ColorFamily[] = ['purple', 'fuchsia', 'pink', 'red', 'orange', 'yellow', 'lime', 'green', 'emerald', 'cyan', 'blue', 'indigo']
-const LIGHT_SWATCH_MARKS: SwatchCandidate[] = [
-    { shade: 500, chromaShare: 1 },
-    { shade: 600, chromaShare: 1 },
-    { shade: 700, chromaShare: 1 },
-]
-const DARK_SWATCH_MARKS: SwatchCandidate[] = [
-    { shade: 500, chromaShare: 0.85 },
-    { shade: 400, chromaShare: 0.85 },
-    { shade: 300, chromaShare: 0.85 },
-]
+const SWATCH_MARK_SHADES: Partial<Record<ColorFamily, number>> = {
+    purple: 600,
+    fuchsia: 600,
+    pink: 600,
+    red: 600,
+    orange: 600,
+    yellow: 500,
+    lime: 500,
+    green: 600,
+    emerald: 700,
+    cyan: 600,
+    blue: 600,
+    indigo: 500,
+}
 
 const COLOR_FAMILY_NAMES: ColorFamily[] = ['red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose']
 
@@ -357,9 +362,33 @@ function withHash({ hex }: { hex: string }): string {
 }
 
 function onPrimaryFor({ hex }: { hex: string }): string {
+    if (Math.abs(apcaContrast({ text: WHITE, background: hex })) >= WHITE_LABEL_LC) {
+        return WHITE
+    }
     const onWhite = contrastRatio({ foreground: WHITE, background: hex })
     const onBlack = contrastRatio({ foreground: BLACK, background: hex })
     return onWhite >= onBlack ? WHITE : BLACK
+}
+
+function apcaContrast({ text, background }: { text: string, background: string }): number {
+    const first = parseHex(text)
+    const second = parseHex(background)
+    if (first === null || second === null) {
+        return 0
+    }
+    const screenLuminance = ({ r, g, b }: Srgb): number => {
+        const y = 0.2126729 * Math.pow(r, 2.4) + 0.7151522 * Math.pow(g, 2.4) + 0.072175 * Math.pow(b, 2.4)
+        return y > 0.022 ? y : y + Math.pow(0.022 - y, 1.414)
+    }
+    const textY = screenLuminance(first)
+    const backgroundY = screenLuminance(second)
+    const contrast = backgroundY > textY
+        ? (Math.pow(backgroundY, 0.56) - Math.pow(textY, 0.57)) * 1.14
+        : (Math.pow(backgroundY, 0.65) - Math.pow(textY, 0.62)) * 1.14
+    if (Math.abs(contrast) < 0.1) {
+        return 0
+    }
+    return (contrast > 0 ? contrast - 0.027 : contrast + 0.027) * 100
 }
 
 function cssVariables({
@@ -485,13 +514,13 @@ function swatches(): Swatch[] {
         const deepest = shadeOf({ family, shade: 950 })
         return {
             light: {
-                ...swatchMark({ family, candidates: LIGHT_SWATCH_MARKS, deepest }),
+                ...swatchMark({ family, deepest }),
                 surface: generated.light[3],
                 line: generated.light[5],
                 ink: generated.light[11],
             },
             dark: {
-                ...swatchMark({ family, candidates: DARK_SWATCH_MARKS, deepest }),
+                ...swatchMark({ family, deepest }),
                 surface: generated.dark[3],
                 line: generated.dark[7],
                 ink: generated.dark[11],
@@ -502,25 +531,24 @@ function swatches(): Swatch[] {
 
 function swatchMark({
     family,
-    candidates,
     deepest,
 }: {
     family: ColorFamily
-    candidates: SwatchCandidate[]
     deepest: OklchColor
 }): { mark: string, on: string } {
-    const white: OklchColor = { lightness: 100, chroma: 0, hue: 0 }
-    const options = candidates.map((candidate) => {
-        const shade = shadeOf({ family, shade: candidate.shade })
-        const mark = { ...shade, chroma: shade.chroma * candidate.chromaShare }
-        const label = luminanceContrast({ first: white, second: mark }) >= luminanceContrast({ first: deepest, second: mark }) ? white : deepest
-        return { mark, label, contrast: luminanceContrast({ first: label, second: mark }) }
-    })
-    const chosen = options.find((option) => option.contrast >= TEXT_CONTRAST) ?? options[options.length - 1]
+    const mark = shadeOf({ family, shade: SWATCH_MARK_SHADES[family] ?? 600 })
     return {
-        mark: formatOklch({ color: chosen.mark }),
-        on: chosen.label === white ? WHITE : formatOklch({ color: chosen.label }),
+        mark: formatOklch({ color: mark }),
+        on: swatchLabelFor({ mark, deepest }),
     }
+}
+
+function swatchLabelFor({ mark, deepest }: { mark: OklchColor, deepest: OklchColor }): string {
+    if (Math.abs(apcaContrast({ text: WHITE, background: oklchToHex({ color: mark }) })) >= WHITE_LABEL_LC) {
+        return WHITE
+    }
+    const white: OklchColor = { lightness: 100, chroma: 0, hue: 0 }
+    return luminanceContrast({ first: white, second: mark }) >= luminanceContrast({ first: deepest, second: mark }) ? WHITE : formatOklch({ color: deepest })
 }
 
 function rampVariables({ scale, generated }: { scale: RampScale, generated: Ramp }): Record<string, string> {
@@ -705,11 +733,6 @@ type FamilyShade = {
     lightness: number
     chroma: number
     hue: number
-}
-
-type SwatchCandidate = {
-    shade: number
-    chromaShare: number
 }
 
 type SwatchRoles = {
