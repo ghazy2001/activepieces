@@ -84,7 +84,8 @@ export function createLanguageModel({ credentials, modelId, options = {} }: Crea
         case AIProviderName.QWEN:
         case AIProviderName.MINIMAX:
         case AIProviderName.MOONSHOT:
-        case AIProviderName.NVIDIA: {
+        case AIProviderName.NVIDIA:
+        case AIProviderName.VERCEL: {
             const { apiKey } = credentials.auth
             return createOpenAICompatible({
                 name: credentials.provider,

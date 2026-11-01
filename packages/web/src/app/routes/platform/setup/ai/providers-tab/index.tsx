@@ -795,5 +795,6 @@ const PROVIDERS_BY_IMPORTANCE: AIProviderName[] = [
   AIProviderName.MINIMAX,
   AIProviderName.ZAI,
   AIProviderName.CLOUDFLARE_GATEWAY,
+  AIProviderName.VERCEL,
   AIProviderName.CUSTOM,
 ];

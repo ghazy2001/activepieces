@@ -35,4 +35,11 @@ describe('AI provider requests', () => {
         expect(CreateAIProviderRequest.safeParse(request).success).toBe(true)
         expect(UpdateAIProviderRequest.safeParse({ displayName: 'OpenAI', auth: { apiKey: 'sk-live' } }).success).toBe(true)
     })
+
+    it('accepts Vercel AI Gateway requests with an api key', () => {
+        const request = { displayName: 'Vercel AI Gateway', provider: AIProviderName.VERCEL, config: {}, auth: { apiKey: 'vck_live' } }
+
+        expect(CreateAIProviderRequest.safeParse(request).success).toBe(true)
+        expect(UpdateAIProviderRequest.parse({ displayName: 'Vercel AI Gateway', auth: { apiKey: 'vck_live' } }).auth).toEqual({ apiKey: 'vck_live' })
+    })
 })

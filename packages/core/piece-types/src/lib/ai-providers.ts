@@ -1,4 +1,5 @@
 import { AIProviderName, isNil, unique } from '@activepieces/core-utils'
+export { AIProviderName } from '@activepieces/core-utils'
 import * as z from 'zod/mini'
 
 export enum AIProviderModelType {
@@ -422,7 +423,10 @@ const EMBEDDING_MODELS: Partial<Record<AIProviderName, readonly string[]>> = {
     [AIProviderName.AZURE]: ['text-embedding-3-small', 'text-embedding-3-large'],
     [AIProviderName.ACTIVEPIECES]: ['text-embedding-3-small'],
     [AIProviderName.OPENROUTER]: ['openai/text-embedding-3-small', 'openai/text-embedding-3-large'],
+    [AIProviderName.VERCEL]: ['openai/text-embedding-3-small', 'openai/text-embedding-3-large'],
 }
+
+export const DEFAULT_EMBEDDING_MODELS = EMBEDDING_MODELS
 
 const WEB_SEARCH_MODE_BY_PROVIDER: Partial<Record<AIProviderName, AIWebSearchMode>> = {
     [AIProviderName.ANTHROPIC]: 'native',
@@ -453,6 +457,7 @@ export const OPENAI_COMPATIBLE_VENDOR_BASE_URLS: Record<OpenAiCompatibleVendor, 
     [AIProviderName.MOONSHOT]: 'https://api.moonshot.ai/v1',
     [AIProviderName.META]: 'https://api.meta.ai/v1',
     [AIProviderName.NVIDIA]: 'https://integrate.api.nvidia.com/v1',
+    [AIProviderName.VERCEL]: 'https://ai-gateway.vercel.sh/v1',
 }
 
 function buildProviderCapabilities(provider: AIProviderName): AIProviderCapabilities {
@@ -513,6 +518,7 @@ export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabili
     [AIProviderName.MOONSHOT]: buildProviderCapabilities(AIProviderName.MOONSHOT),
     [AIProviderName.META]: buildProviderCapabilities(AIProviderName.META),
     [AIProviderName.NVIDIA]: buildProviderCapabilities(AIProviderName.NVIDIA),
+    [AIProviderName.VERCEL]: buildProviderCapabilities(AIProviderName.VERCEL),
 }
 
 export const aiProviderUtils = {
@@ -542,6 +548,7 @@ export type OpenAiCompatibleVendor =
     | AIProviderName.MOONSHOT
     | AIProviderName.META
     | AIProviderName.NVIDIA
+    | AIProviderName.VERCEL
 
 export type AIProviderCapabilities = {
     chatModels?: readonly string[] | undefined

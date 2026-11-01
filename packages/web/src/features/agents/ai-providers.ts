@@ -198,6 +198,18 @@ This connects to Z.ai's international endpoint. A key from bigmodel.cn will not 
 `),
   },
   {
+    provider: AIProviderName.VERCEL,
+    name: 'Vercel AI Gateway',
+    logoUrl: 'https://cdn.activepieces.com/pieces/vercel.png',
+    markdown: t(`Follow these instructions to get your Vercel AI Gateway API Key:
+
+1. Go to https://vercel.com/dashboard and navigate to your team or project settings.
+2. Under **AI Gateway**, create or obtain your API key.
+3. Paste the API key below.
+`),
+    dashboardUrl: 'https://vercel.com/dashboard',
+  },
+  {
     provider: AIProviderName.CUSTOM,
     name: 'Other (OpenAI Compatible)',
     logoUrl: 'https://cdn.activepieces.com/pieces/new-core/text-ai.svg',

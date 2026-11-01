@@ -48,6 +48,7 @@ describe('openAiCompatibleVendor', () => {
     it.each([
         { provider: AIProviderName.META, url: 'https://api.meta.ai/v1/models' },
         { provider: AIProviderName.NVIDIA, url: 'https://integrate.api.nvidia.com/v1/models' },
+        { provider: AIProviderName.VERCEL, url: 'https://ai-gateway.vercel.sh/v1/models' },
     ])('lists $provider models from its own endpoint', async ({ provider, url }) => {
         respondWith(['some-model'])
         const vendor = openAiCompatibleVendor({ name: provider, provider })

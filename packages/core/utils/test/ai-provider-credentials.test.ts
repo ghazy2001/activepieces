@@ -18,6 +18,15 @@ describe('aiProviderCredentials', () => {
         expect(credentials).toEqual({ provider: AIProviderName.CUSTOM, auth: { apiKey: 'sk-live' }, config: customConfig })
     })
 
+    it('returns a well-formed Vercel AI Gateway row unchanged', () => {
+        const credentials = aiProviderCredentials({
+            provider: AIProviderName.VERCEL,
+            auth: { apiKey: 'vck_live' },
+            config: {},
+        })
+        expect(credentials).toEqual({ provider: AIProviderName.VERCEL, auth: { apiKey: 'vck_live' }, config: {} })
+    })
+
     it('keeps the key of a row whose config predates a tightened rule, rather than failing the read', () => {
         const credentials = aiProviderCredentials({
             provider: AIProviderName.VERTEX,

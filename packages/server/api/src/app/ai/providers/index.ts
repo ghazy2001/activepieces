@@ -32,6 +32,7 @@ export const aiProviders: Record<AIProviderName, AIProviderStrategy<AIProviderAu
     [AIProviderName.MOONSHOT]: openAiCompatibleVendor({ name: 'Moonshot AI', provider: AIProviderName.MOONSHOT }),
     [AIProviderName.META]: openAiCompatibleVendor({ name: 'Meta', provider: AIProviderName.META }),
     [AIProviderName.NVIDIA]: openAiCompatibleVendor({ name: 'NVIDIA', provider: AIProviderName.NVIDIA }),
+    [AIProviderName.VERCEL]: openAiCompatibleVendor({ name: 'Vercel AI Gateway', provider: AIProviderName.VERCEL }),
     [AIProviderName.ACTIVEPIECES]: {
         ...openRouterProvider,
         name: 'Activepieces',
