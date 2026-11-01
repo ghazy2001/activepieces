@@ -1,6 +1,6 @@
 import { ActivepiecesAiBilling, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
-import { ExtractStructuredDataJobData, ResolveAiProviderResponse } from '@activepieces/shared'
+import { aiProviderUtils, ExtractStructuredDataJobData, ResolveAiProviderResponse } from '@activepieces/shared'
 import { generateText, jsonSchema, ModelMessage, tool, UserModelMessage } from 'ai'
 import { ResolvedAiFile } from './ai-files'
 
@@ -27,14 +27,16 @@ export async function extractStructuredData({ data, resolved, modelId, flowStep,
         execute: async (extracted) => extracted,
     })
 
+    const supportsForcedToolChoice = aiProviderUtils.supportsForcedToolChoice({ modelId })
+
     try {
         const result = await generateText({
             model,
             ...spreadIfDefined('maxRetries', maxRetries),
             ...spreadIfDefined('maxOutputTokens', data.maxOutputTokens),
             tools: { extractData: extractionTool },
-            toolChoice: 'required',
-            messages: buildMessages({ data, files }),
+            toolChoice: supportsForcedToolChoice ? 'required' : 'auto',
+            messages: buildMessages({ data, files, mustCallExtractData: !supportsForcedToolChoice }),
         })
         const toolCalls = result.toolCalls
         if (isNil(toolCalls) || toolCalls.length === 0) {
@@ -67,11 +69,14 @@ function buildSchema(data: ExtractStructuredDataJobData): { schemaDefinition: Re
     return { schemaDefinition: jsonSchema({ type: 'object', properties, required } as Parameters<typeof jsonSchema>[0]), sanitizedNameMap }
 }
 
-function buildMessages({ data, files }: { data: ExtractStructuredDataJobData, files: ResolvedAiFile[] }): ModelMessage[] {
+function buildMessages({ data, files, mustCallExtractData = false }: { data: ExtractStructuredDataJobData, files: ResolvedAiFile[], mustCallExtractData?: boolean }): ModelMessage[] {
     const prompt = data.prompt ?? ''
     const guide = prompt.length === 0 ? 'Extract the following data from the provided data.' : prompt
     const text = data.text ?? ''
-    const textContent = text.length === 0 ? guide : `${guide}\n\nText to analyze:\n${text}`
+    const baseContent = text.length === 0 ? guide : `${guide}\n\nText to analyze:\n${text}`
+    const textContent = mustCallExtractData
+        ? `${baseContent}\n\nYou must call the extractData tool with the extracted data.`
+        : baseContent
     const contentParts: Exclude<UserModelMessage['content'], string> = [{ type: 'text', text: textContent }]
     for (const file of files) {
         if (file.base64.length === 0) {

@@ -138,6 +138,55 @@ describe('canDisableReasoning', () => {
     })
 })
 
+describe('supportsForcedToolChoice', () => {
+    it.each([
+        'claude-opus-5-5',
+        'claude-opus-5.5',
+        'claude-sonnet-5-5',
+        'claude-sonnet-5.5',
+        'claude-fable-5-1',
+        'claude-fable-5.1',
+        'claude-mythos-5-1',
+        'claude-mythos-5.1',
+        'anthropic/claude-opus-5.5',
+        'anthropic/claude-sonnet-5.5',
+        'anthropic/claude-fable-5.1',
+        'anthropic/claude-mythos-5.1',
+        'anthropic.claude-opus-5-5',
+        'anthropic.claude-sonnet-5-5',
+        'us.anthropic.claude-opus-5-5-v1:0',
+        'us.anthropic.claude-sonnet-5-5-20250929-v1:0',
+        'claude-opus-5-5@20250815',
+        'opus-5-5',
+        'sonnet-5.5',
+    ])('is false for models where Anthropic removed forced tool choice (%s)', (modelId) => {
+        expect(aiProviderUtils.supportsForcedToolChoice({ modelId })).toBe(false)
+        expect(aiProviderUtils.supportsForcedToolChoice(modelId)).toBe(false)
+    })
+
+    it.each([
+        'claude-haiku-5-5',
+        'claude-haiku-5.5',
+        'anthropic/claude-haiku-5.5',
+        'claude-opus-5',
+        'claude-sonnet-5',
+        'claude-fable-5',
+        'claude-haiku-4-5',
+        'claude-haiku-4.5',
+        'claude-sonnet-4-6',
+        'claude-sonnet-4.6',
+        'claude-opus-4-7',
+        'claude-3-5-sonnet-20241022',
+        'gpt-4o',
+        'gpt-5.5',
+        'gemini-2.5-pro',
+        '',
+    ])('is true for models that support forced tool choice (%s)', (modelId) => {
+        expect(aiProviderUtils.supportsForcedToolChoice({ modelId })).toBe(true)
+        expect(aiProviderUtils.supportsForcedToolChoice(modelId)).toBe(true)
+    })
+})
+
 describe('tier native model ids', () => {
     it('names a model the native Anthropic list actually offers, so no tier resolves to an id that does not exist', () => {
         for (const tier of ACTIVEPIECES_CHAT_TIERS) {

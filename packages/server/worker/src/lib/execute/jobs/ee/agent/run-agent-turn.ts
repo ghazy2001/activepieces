@@ -21,6 +21,7 @@ const USER_CONFIG_ENTITY_TYPES = new Set<string>(Object.values(AI_PROVIDER_ENTIT
 const USER_FACING_ERROR_CODES = new Set<string>([ErrorCode.VALIDATION, ErrorCode.CHAT_CONTEXT_LIMIT_EXCEEDED])
 const CONTINUE_NUDGE = '[system note — not from the user] Your previous response was cut off by the output token limit before it finished. Continue exactly where you stopped. If a tool call was cut off, re-issue it in FULL. Do not repeat content you already produced.'
 const FINAL_STEP_NOTE = '[system note — not from the user] This is the last step of this run. Finish now with what you have: say what you finished and what is still left to do, and offer to carry on. Do not mention steps, tools or this note.'
+const FINAL_STEP_COMPLETION_NOTE = `[system note — not from the user] This is the last step of this run. Finish now and report your final results by calling the ${TASK_COMPLETION_TOOL_NAME} tool.`
 const EMPTY_OUTPUT_NUDGE = '[system note — not from the user] Your previous step produced no visible reply to the user. Continue the task now: either call the next tool, or write your reply to the user. Do not stop silently.'
 
 const FINAL_STEP_MESSAGE: ModelMessage = { role: 'user', content: FINAL_STEP_NOTE }
@@ -171,19 +172,23 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
             const isLastAllowedStep = !isNil(stepCeiling) && steps.length >= stepCeiling - 1
             const reportsStructuredOutput = allToolNames.includes(TASK_COMPLETION_TOOL_NAME)
             const forcesCompletion = isLastAllowedStep && reportsStructuredOutput
-            const toolChoice: ToolChoice<ToolSet> | undefined = isLastAllowedStep
-                ? (forcesCompletion ? { type: 'tool', toolName: TASK_COMPLETION_TOOL_NAME } : 'none')
-                : undefined
-            const disableThinking = isFirstStep || phaseState.phase === 'discovery' || forcesCompletion
             const stepModel = isFirstStep && !isNil(fast) ? fast : current()
             const usesFastModel = stepModel !== current()
+            const stepModelSupportsForcedToolChoice = aiProviderUtils.supportsForcedToolChoice({ modelId: stepModel.modelId })
+            const toolChoice: ToolChoice<ToolSet> | undefined = isLastAllowedStep
+                ? (forcesCompletion ? (stepModelSupportsForcedToolChoice ? { type: 'tool', toolName: TASK_COMPLETION_TOOL_NAME } : 'auto') : 'none')
+                : undefined
+            const disableThinking = isFirstStep || phaseState.phase === 'discovery' || forcesCompletion
             const stepBudget = stepModel.budget
             const visibleTools = skillSurface?.attachedToolNames() ?? agentToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames })
             const phaseTools = isNil(skillSurface) ? visibleTools.filter((name) => paidToolsAffordable || !chatBilling.isPaidTool(name)) : visibleTools
             const activeTools = forcesCompletion ? [TASK_COMPLETION_TOOL_NAME] : phaseTools
             const boundedContext = boundContextForStep({ baseMessages: attemptMessages, steps, systemPrompt: turnSystemPrompt, provider: stepModel.provider })
+            const finalStepMessage: ModelMessage = forcesCompletion && !stepModelSupportsForcedToolChoice
+                ? { role: 'user', content: FINAL_STEP_COMPLETION_NOTE }
+                : FINAL_STEP_MESSAGE
             const stepContext = isLastAllowedStep
-                ? { messages: [...(boundedContext.messages ?? currentMessages), FINAL_STEP_MESSAGE] }
+                ? { messages: [...(boundedContext.messages ?? currentMessages), finalStepMessage] }
                 : boundedContext
             lastStepUsedFast = usesFastModel
             onStepModel?.(stepModel)

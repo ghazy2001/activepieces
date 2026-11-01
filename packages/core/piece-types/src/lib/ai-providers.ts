@@ -304,6 +304,17 @@ function canDisableReasoning({ modelId }: { modelId: string }): boolean {
     return REASONING_OPTIONAL_CHAT_MODELS.includes(modelId)
 }
 
+const FORCED_TOOL_CHOICE_UNSUPPORTED_MODELS_REGEX = /(?:^|[^a-z0-9])(opus-5-5|sonnet-5-5|fable-5-1|mythos-5-1)(?:[^a-z0-9]|$)/
+
+function supportsForcedToolChoice(input: string | { modelId?: string }): boolean {
+    const modelId = typeof input === 'string' ? input : input?.modelId
+    if (isNil(modelId) || typeof modelId !== 'string') {
+        return true
+    }
+    const normalized = modelId.trim().toLowerCase().replace(/[._]/g, '-')
+    return !FORCED_TOOL_CHOICE_UNSUPPORTED_MODELS_REGEX.test(normalized)
+}
+
 function managedChatModelIds(): string[] {
     return unique([
         ...ALLOWED_CHAT_MODELS_BY_PROVIDER[AIProviderName.ACTIVEPIECES] ?? [],
@@ -523,6 +534,7 @@ export const aiProviderUtils = {
     managedChatModelIds,
     isManagedChatModelId,
     canDisableReasoning,
+    supportsForcedToolChoice,
     isChatModelId,
 }
 
